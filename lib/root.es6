@@ -1,5 +1,10 @@
 import Container from './container'
 
+function isString (obj) {
+  return typeof obj === 'string' ||
+    (!!obj && typeof obj === 'object' && obj.constructor === String)
+}
+
 /**
  * Represents a CSS file and contains all its parsed nodes.
  *
@@ -66,6 +71,36 @@ class Root extends Container {
 
     let lazy = new LazyResult(new Processor(), this, opts)
     return lazy.stringify()
+  }
+
+  on (typeNode, cb) {
+    /*
+    css.on("decl", (node) => {})  or  css.on("decl.enter", (node) => {})
+    css.on("rule.exit", (node) => {})
+     */
+    this.normalizeNameTypeNode(typeNode)
+    cb()
+  }
+
+  // todo сделать проверку на тип узла
+
+  normalizeNameTypeNode (typeNode) {
+    let type = typeNode
+    if (!isString(type)) {
+      throw new Error('typeNode должен быть строкой')
+    }
+    let arr = type.split('.')
+    if (arr.length === 1) {
+      type = `${ type }.enter`
+    } else if (arr.length === 2) {
+      if (arr[1] !== 'enter' && arr[1] !== 'exit') {
+        throw new Error(
+          'Плагин должен подписаться или на enter или на exit узла')
+      }
+    } else if (arr.length > 2) {
+      throw new Error('Плагин должен подписаться или на enter или на exit узла')
+    }
+    return type
   }
 
   /**

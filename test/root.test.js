@@ -60,3 +60,41 @@ it('generates result with map', () => {
   expect(result instanceof Result).toBeTruthy()
   expect(result.css).toMatch(/a \{\}\n\/\*# sourceMappingURL=/)
 })
+
+it('normalizeNameTypeNode("decl") => "decl.enter"', () => {
+  let root = parse('')
+  let normalize = root.normalizeNameTypeNode('decl')
+
+  expect(normalize).toEqual('decl.enter')
+})
+
+it('normalizeNameTypeNode("decl.exit") => "decl.exit"', () => {
+  let root = parse('')
+  let normalize = root.normalizeNameTypeNode('decl.exit')
+
+  expect(normalize).toEqual('decl.exit')
+})
+
+it('normalizeNameTypeNode(123) должен выкинуть ошибку', () => {
+  let root = parse('')
+
+  expect(() => {
+    root.normalizeNameTypeNode(123)
+  }).toThrowError(/должен быть строкой/)
+})
+
+it('normalizeNameTypeNode("decl.abcd") должен выкинуть ошибку', () => {
+  let root = parse('')
+
+  expect(() => {
+    root.normalizeNameTypeNode('decl.abcd')
+  }).toThrowError(/enter/)
+})
+
+it('normalizeNameTypeNode("decl.exit.abcd") должен выкинуть ошибку', () => {
+  let root = parse('')
+
+  expect(() => {
+    root.normalizeNameTypeNode('decl.exit.abcd')
+  }).toThrowError(/enter/)
+})
