@@ -20,6 +20,7 @@ class Root extends Container {
     super(defaults)
     this.type = 'root'
     if (!this.nodes) this.nodes = []
+    if (!this.listeners) this.listeners = {}
   }
 
   removeChild (child, ignore) {
@@ -78,21 +79,20 @@ class Root extends Container {
     css.on("decl", (node) => {})  or  css.on("decl.enter", (node) => {})
     css.on("rule.exit", (node) => {})
      */
-    this.normalizeNameTypeNode(typeNode)
-    cb()
+    this.validateNameTypeNode(typeNode)
+    let listener = this.normalizeVisitorPlugin(typeNode, cb)
+    this.updateVisitorPlugins(listener)
   }
 
   // todo сделать проверку на тип узла
 
-  normalizeNameTypeNode (typeNode) {
+  validateNameTypeNode (typeNode) {
     let type = typeNode
     if (!isString(type)) {
       throw new Error('typeNode должен быть строкой')
     }
     let arr = type.split('.')
-    if (arr.length === 1) {
-      type = `${ type }.enter`
-    } else if (arr.length === 2) {
+    if (arr.length === 2) {
       if (arr[1] !== 'enter' && arr[1] !== 'exit') {
         throw new Error(
           'Плагин должен подписаться или на enter или на exit узла')
@@ -100,7 +100,44 @@ class Root extends Container {
     } else if (arr.length > 2) {
       throw new Error('Плагин должен подписаться или на enter или на exit узла')
     }
-    return type
+  }
+
+  /* Приведение к общему виду имен типа узла */
+  normalizeVisitorPlugin (typeNode, cb = function () {}) {
+    // typeNode имеет вид "decl" или "decl.exit" или "decl.enter"
+    // return { decl: {enter: cb}}
+    let type = typeNode
+    if (!type.includes('.')) {
+      type = `${ type }.enter`
+    }
+
+    let arr = type.split('.')
+    return ({
+      [arr[0]]: {
+        [arr[1]]: cb
+      }
+    })
+  }
+
+  updateVisitorPlugins (listeners) {
+    let type = Object.keys(listeners).pop()
+    let eventName = Object.keys(listeners[type]).pop()
+    let cb = listeners[type][eventName]
+
+    let visitorPlugins = this.listeners || {}
+    let eventByType = visitorPlugins[type] || {}
+    let callbacksByEvent = eventByType[eventName] || []
+
+    this.listeners = {
+      ...visitorPlugins,
+      [type]: {
+        ...eventByType,
+        [eventName]: [
+          ...callbacksByEvent,
+          cb
+        ]
+      }
+    }
   }
 
   /**
