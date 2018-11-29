@@ -61,40 +61,102 @@ it('generates result with map', () => {
   expect(result.css).toMatch(/a \{\}\n\/\*# sourceMappingURL=/)
 })
 
-it('normalizeNameTypeNode("decl") => "decl.enter"', () => {
+it('validateNameTypeNode("decl") => ok', () => {
   let root = parse('')
-  let normalize = root.normalizeNameTypeNode('decl')
+  let validate = root.validateNameTypeNode('decl')
 
-  expect(normalize).toEqual('decl.enter')
+  expect(validate).toBeUndefined()
 })
 
-it('normalizeNameTypeNode("decl.exit") => "decl.exit"', () => {
+it('validateNameTypeNode("decl.exit") => ok', () => {
   let root = parse('')
-  let normalize = root.normalizeNameTypeNode('decl.exit')
+  let validate = root.validateNameTypeNode('decl.exit')
 
-  expect(normalize).toEqual('decl.exit')
+  expect(validate).toBeUndefined()
 })
 
-it('normalizeNameTypeNode(123) должен выкинуть ошибку', () => {
+it('validateNameTypeNode(123) должен выкинуть ошибку', () => {
   let root = parse('')
 
   expect(() => {
-    root.normalizeNameTypeNode(123)
+    root.validateNameTypeNode(123)
   }).toThrowError(/должен быть строкой/)
 })
 
-it('normalizeNameTypeNode("decl.abcd") должен выкинуть ошибку', () => {
+it('validateNameTypeNode("decl.abcd") должен выкинуть ошибку', () => {
   let root = parse('')
 
   expect(() => {
-    root.normalizeNameTypeNode('decl.abcd')
+    root.validateNameTypeNode('decl.abcd')
   }).toThrowError(/enter/)
 })
 
-it('normalizeNameTypeNode("decl.exit.abcd") должен выкинуть ошибку', () => {
+it('validateNameTypeNode("decl.exit.abcd") должен выкинуть ошибку', () => {
   let root = parse('')
 
   expect(() => {
-    root.normalizeNameTypeNode('decl.exit.abcd')
+    root.validateNameTypeNode('decl.exit.abcd')
   }).toThrowError(/enter/)
+})
+
+it('normalizeVisitorPlugin("decl") => "decl.enter"', () => {
+  let root = parse('')
+  let normalize = root.normalizeVisitorPlugin('decl')
+
+  expect(normalize).toHaveProperty('decl')
+  expect(normalize).toHaveProperty('decl.enter')
+})
+
+it('normalizeVisitorPlugin("decl.enter") => "decl.enter"', () => {
+  let root = parse('')
+  let normalize = root.normalizeVisitorPlugin('decl.enter')
+
+  expect(normalize).toHaveProperty('decl')
+  expect(normalize).toHaveProperty('decl.enter')
+})
+
+it('normalizeVisitorPlugin("decl.exit") => "decl.exit"', () => {
+  let root = parse('')
+  let normalize = root.normalizeVisitorPlugin('decl.exit')
+
+  expect(normalize).toHaveProperty('decl')
+  expect(normalize).toHaveProperty('decl.exit')
+})
+
+it('on() - вызов функций', () => {
+  let root = parse('')
+
+  let cb = () => {}
+  root.validateNameTypeNode = jest.fn()
+  root.normalizeVisitorPlugin = jest.fn()
+  root.updateVisitorPlugins = jest.fn()
+
+  root.on('decl', cb)
+
+  expect(root.validateNameTypeNode).toHaveBeenCalledWith('decl')
+  expect(root.normalizeVisitorPlugin).toHaveBeenCalledWith('decl', cb)
+  expect(root.updateVisitorPlugins).toHaveBeenCalled()
+})
+
+it('on() - наполнение массива плагинов', () => {
+  let root = parse('')
+
+  let cb = () => {}
+  let expected = {
+    decl: {
+      enter: [cb, cb],
+      exit: [cb]
+    },
+    role: {
+      exit: [cb]
+    }
+  }
+
+  root.listeners = {}
+  root.on('decl', cb)
+  root.on('decl.enter', cb)
+  root.on('decl.exit', cb)
+  root.on('role.exit', cb)
+
+  expect(root.listeners).toEqual(expected)
 })
