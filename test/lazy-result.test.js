@@ -57,3 +57,9 @@ it('executes on finally callback', () => {
     .finally(mockCallback)
     .then(() => expect(mockCallback).toHaveBeenCalledTimes(1))
 })
+
+it('walkVisitorPlugins()', () => {
+  let result = new LazyResult(processor, 'a{color: black}', { })
+  console.log('dfdsf', result)
+  // expect(result.warnings()).toEqual([])
+})
