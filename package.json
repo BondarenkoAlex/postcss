@@ -69,7 +69,8 @@
     "spell": "yarn docs && yaspeller-ci api/*.html *.md docs/{**/,}*.md",
     "docs": "jsdoc -c .jsdocrc lib/*.es6",
     "lint": "eslint-ci *.js lib/*.es6 test/*.js",
-    "test": "gulp && jest && yarn lint && yarn spell && size-limit"
+    "test": "gulp && jest && yarn lint && yarn spell && size-limit",
+    "jest": "gulp --gulpfile gulpfiletest.js && jest test/lazy-result.test.js"
   },
   "main": "lib/postcss",
   "types": "lib/postcss.d.ts",
