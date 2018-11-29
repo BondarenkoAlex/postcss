@@ -271,6 +271,9 @@ class LazyResult {
 
   asyncTick (resolve, reject) {
     if (this.plugin >= this.processor.plugins.length) {
+      // вызываем обработку плагинов visitor
+      this.walkVisitorPlugins()
+
       this.processed = true
       return resolve()
     }
@@ -342,6 +345,9 @@ class LazyResult {
       }
     }
 
+    // вызываем обработку плагинов visitor
+    this.walkVisitorPlugins()
+
     return this.result
   }
 
@@ -374,6 +380,14 @@ class LazyResult {
     this.result.map = data[1]
 
     return this.result
+  }
+
+  walkVisitorPlugins () {
+    let root = this.result.root
+    let listeners = this.result.root.listeners || {}
+    root.each((node, index) => {
+      console.log(node, listeners, index)
+    })
   }
 }
 
