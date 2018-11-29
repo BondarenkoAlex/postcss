@@ -266,7 +266,8 @@ it('toJSON() converts custom properties', () => {
     nodes: [],
     raws: { },
     _hack: 'hack',
-    _cache: [1]
+    _cache: [1],
+    visitorPlugins: []
   })
 })
 
