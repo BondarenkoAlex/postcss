@@ -148,34 +148,34 @@ it('creates plugins list', () => {
 //   }).toThrowError(/PostCSS received null instead of CSS string/)
 // })
 
-it('example visitor plugin will-change', () => {
-  let plugin = postcss.plugin('postcss-will-change', () => {
-    // options - опции в конфиге
-    return function (css) {
-      css.on('decl', node => {
-        let already = node.parent.some(i => {
-          return i.type === 'decl' && i.prop === 'backface-visibility'
-        })
-
-        if (already) {
-          return
-        }
-
-        node.cloneBefore({
-          prop: 'backface-visibility',
-          value: 'hidden'
-        })
-      })
-    }
-  })
-
-  // return postcss([plugin]).process('.foo{will-change: transform;}',
-  // { from: undefined })
-  return postcss([plugin]).process('@media screen and (min-width: 480px) ' +
-    '{body {background-color: lightgreen; color: red;}' +
-    '.foo{will-change: transform;}}' +
-    'div{color: green;}', { from: undefined })
-    .then(result => {
-      expect(result.css).toEqual('')
-    })
-})
+// it('example visitor plugin will-change', () => {
+//   let plugin = postcss.plugin('postcss-will-change', () => {
+//     // options - опции в конфиге
+//     return function (css) {
+//       css.on('decl', node => {
+//         let already = node.parent.some(i => {
+//           return i.type === 'decl' && i.prop === 'backface-visibility'
+//         })
+//
+//         if (already) {
+//           return
+//         }
+//
+//         node.cloneBefore({
+//           prop: 'backface-visibility',
+//           value: 'hidden'
+//         })
+//       })
+//     }
+//   })
+//
+//   // return postcss([plugin]).process('.foo{will-change: transform;}',
+//   // { from: undefined })
+//   return postcss([plugin]).process('@media screen and (min-width: 480px) ' +
+//     '{body {background-color: lightgreen; color: red;}' +
+//     '.foo{will-change: transform;}}' +
+//     'div{color: green;}', { from: undefined })
+//     .then(result => {
+//       expect(result.css).toEqual('')
+//     })
+// })
