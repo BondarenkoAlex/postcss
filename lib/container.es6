@@ -21,6 +21,12 @@ function cleanSource (nodes) {
  * @abstract
  */
 class Container extends Node {
+  constructor () {
+    super()
+    this.isComplete = false // признак того, что завершен обхода узла
+    this.isDirty = true // признак того, что узел грязный и его надо обойти
+  }
+
   push (child) {
     child.parent = this
     this.nodes.push(child)
@@ -61,6 +67,7 @@ class Container extends Node {
    * })
    */
   each (callback) {
+    console.log(`each`)
     if (!this.lastEach) this.lastEach = 0
     if (!this.indexes) this.indexes = { }
 
@@ -69,15 +76,21 @@ class Container extends Node {
     this.indexes[id] = 0
 
     if (!this.nodes) return undefined
+    console.log(`markDirty`)
+    this.markDirty()
 
     let index, result
     while (this.indexes[id] < this.nodes.length) {
+      if (this.isDirtyNode()) { this.indexes[id] = 0 }
+
       index = this.indexes[id]
       result = callback(this.nodes[index], index)
       if (result === false) break
 
       this.indexes[id] += 1
     }
+
+    this.markComplete()
 
     delete this.indexes[id]
 
@@ -325,6 +338,9 @@ class Container extends Node {
       let nodes = this.normalize(child, this.last)
       for (let node of nodes) this.nodes.push(node)
     }
+
+    this.resetNodeRound()
+
     return this
   }
 
@@ -357,6 +373,9 @@ class Container extends Node {
         this.indexes[id] = this.indexes[id] + nodes.length
       }
     }
+
+    this.resetNodeRound()
+
     return this
   }
 
@@ -393,6 +412,8 @@ class Container extends Node {
       }
     }
 
+    this.resetNodeRound()
+
     return this
   }
 
@@ -417,6 +438,8 @@ class Container extends Node {
         this.indexes[id] = index + nodes.length
       }
     }
+
+    this.resetNodeRound()
 
     return this
   }
@@ -448,6 +471,8 @@ class Container extends Node {
       }
     }
 
+    this.resetNodeRound()
+
     return this
   }
 
@@ -464,6 +489,9 @@ class Container extends Node {
   removeAll () {
     for (let node of this.nodes) node.parent = undefined
     this.nodes = []
+
+    this.resetNodeRound()
+
     return this
   }
 
@@ -505,6 +533,8 @@ class Container extends Node {
 
       decl.value = decl.value.replace(pattern, callback)
     })
+
+    this.resetNodeRound()
 
     return this
   }
@@ -629,6 +659,92 @@ class Container extends Node {
     })
 
     return processed
+  }
+
+  /**
+   * @private
+   * @return {undefined}
+   */
+  markComplete () {
+    let root = this.root()
+    let isVisitorMode = root.isVisitorMode
+
+    if (!isVisitorMode) { return }
+
+    this.isComplete = true
+  }
+
+  /**
+   * @private
+   * @return {undefined}
+   */
+  markDirty () {
+    let root = this.root()
+    let isVisitorMode = root.isVisitorMode
+    console.log('markDirty isVisitorMode:', isVisitorMode)
+    if (!isVisitorMode) { return }
+
+    this.isDirty = false
+  }
+
+  isDirtyNode () {
+    let root = this.root()
+    let isVisitorMode = root.isVisitorMode
+
+    return isVisitorMode ? false : this.isDirty
+  }
+
+  /**
+   * @private
+   * Сброс обхода узла
+   * @return {undefined}
+   */
+  resetNodeRound () {
+    let root = this.root()
+    let isVisitorMode = root.isVisitorMode
+
+    if (!isVisitorMode) { return }
+
+    this.isDirty = true
+
+    if (this.isComplete) {
+      this.isComplete = false
+
+      if (this.parent) {
+        this.parent.resetNodeRound()
+      }
+    }
+  }
+
+  eachVisitor (callback) {
+    if (!this.lastEach) this.lastEach = 0
+    if (!this.indexes) this.indexes = { }
+
+    this.lastEach += 1
+    let id = this.lastEach
+    this.indexes[id] = 0
+
+    if (!this.nodes) return undefined
+
+    let root = this.root()
+    let isVisitorMode = root.isVisitorMode
+
+    if (isVisitorMode) { this.isDirty = false }
+
+    let index, result
+    while (this.indexes[id] < this.nodes.length) {
+      index = this.indexes[id]
+      result = callback(this.nodes[index], index)
+      if (result === false) break
+
+      this.indexes[id] += 1
+    }
+
+    if (isVisitorMode) { this.isComplete = true }
+
+    delete this.indexes[id]
+
+    return result
   }
 
   /**

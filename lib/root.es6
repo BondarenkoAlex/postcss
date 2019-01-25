@@ -19,6 +19,7 @@ class Root extends Container {
   constructor (defaults) {
     super(defaults)
     this.type = 'root'
+    this.isVisitorMode = false // режим работы
     if (!this.nodes) this.nodes = []
     if (!this.listeners) this.listeners = {}
   }
