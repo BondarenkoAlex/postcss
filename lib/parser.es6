@@ -194,6 +194,9 @@ export default class Parser {
         node.raws.between += token[1]
         break
       } else {
+        if (token[0] === 'word' && /\w/.test(token[1])) {
+          this.unknownWord([token])
+        }
         node.raws.between += token[1]
       }
     }

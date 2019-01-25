@@ -19,8 +19,14 @@ gulp.task('compile', () => {
     .pipe(gulp.dest('lib'))
 })
 
-gulp.task('build:lib', ['compile'], () => {
+gulp.task('build:lib', gulp.series('compile', () => {
   return gulp.src(['lib/*.js', 'lib/*.d.ts']).pipe(gulp.dest('build/lib'))
-})
+}))
 
-gulp.task('default', ['clean', 'build:lib'])
+gulp.task('build', gulp.series(
+  'clean',
+  gulp.parallel('build:lib')
+))
+
+// gulp.task('default', ['clean', 'build:lib'])
+gulp.task('default', gulp.series('build'))
