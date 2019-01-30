@@ -21,8 +21,8 @@ function cleanSource (nodes) {
  * @abstract
  */
 class Container extends Node {
-  constructor () {
-    super()
+  constructor (defaults) {
+    super(defaults)
     this.isComplete = false // признак того, что завершен обхода узла
     this.isDirty = true // признак того, что узел грязный и его надо обойти
   }
@@ -67,7 +67,6 @@ class Container extends Node {
    * })
    */
   each (callback) {
-    console.log(`each`)
     if (!this.lastEach) this.lastEach = 0
     if (!this.indexes) this.indexes = { }
 
@@ -76,8 +75,6 @@ class Container extends Node {
     this.indexes[id] = 0
 
     if (!this.nodes) return undefined
-    console.log(`markDirty`)
-    this.markDirty()
 
     let index, result
     while (this.indexes[id] < this.nodes.length) {
@@ -89,8 +86,6 @@ class Container extends Node {
 
       this.indexes[id] += 1
     }
-
-    this.markComplete()
 
     delete this.indexes[id]
 
@@ -118,6 +113,8 @@ class Container extends Node {
    */
   walk (callback) {
     return this.each((child, i) => {
+      this.markDirty()
+
       let result
       try {
         result = callback(child, i)
@@ -133,6 +130,13 @@ class Container extends Node {
       if (result !== false && child.walk) {
         result = child.walk(callback)
       }
+
+      if (this.isVisitorModeRoot()) {
+        result = callback(child, i, true)
+      }
+
+      this.markComplete()
+
       return result
     })
   }
@@ -662,48 +666,53 @@ class Container extends Node {
   }
 
   /**
+   * Маркеруем узел "обойденным"
    * @private
    * @return {undefined}
    */
   markComplete () {
-    let root = this.root()
-    let isVisitorMode = root.isVisitorMode
-
-    if (!isVisitorMode) { return }
+    if (!this.isVisitorModeRoot()) { return }
 
     this.isComplete = true
   }
 
   /**
+   * @description Маркеруем узел грязным
    * @private
    * @return {undefined}
    */
   markDirty () {
-    let root = this.root()
-    let isVisitorMode = root.isVisitorMode
-    console.log('markDirty isVisitorMode:', isVisitorMode)
-    if (!isVisitorMode) { return }
+    if (!this.isVisitorModeRoot()) { return }
 
     this.isDirty = false
   }
 
+  /**
+   * Проверка узла на "грязность"
+   * @private
+   * @return {boolean} Истина, если узел грязный
+   */
   isDirtyNode () {
-    let root = this.root()
-    let isVisitorMode = root.isVisitorMode
-
-    return isVisitorMode ? false : this.isDirty
+    return this.isVisitorModeRoot() ? this.isDirty : false
   }
 
   /**
+   * Проверка AST дерева на режим обхода в режиме "посетитель"
    * @private
-   * Сброс обхода узла
+   * @return {boolean} Истина, если режим обхода "посетитель"
+   */
+  isVisitorModeRoot () {
+    let root = this.root()
+    return root.isVisitorMode
+  }
+
+  /**
+   * Сброс узла до значения по умолчанию (на "грязный")
+   * @private
    * @return {undefined}
    */
   resetNodeRound () {
-    let root = this.root()
-    let isVisitorMode = root.isVisitorMode
-
-    if (!isVisitorMode) { return }
+    if (!this.isVisitorModeRoot()) { return }
 
     this.isDirty = true
 
@@ -714,37 +723,6 @@ class Container extends Node {
         this.parent.resetNodeRound()
       }
     }
-  }
-
-  eachVisitor (callback) {
-    if (!this.lastEach) this.lastEach = 0
-    if (!this.indexes) this.indexes = { }
-
-    this.lastEach += 1
-    let id = this.lastEach
-    this.indexes[id] = 0
-
-    if (!this.nodes) return undefined
-
-    let root = this.root()
-    let isVisitorMode = root.isVisitorMode
-
-    if (isVisitorMode) { this.isDirty = false }
-
-    let index, result
-    while (this.indexes[id] < this.nodes.length) {
-      index = this.indexes[id]
-      result = callback(this.nodes[index], index)
-      if (result === false) break
-
-      this.indexes[id] += 1
-    }
-
-    if (isVisitorMode) { this.isComplete = true }
-
-    delete this.indexes[id]
-
-    return result
   }
 
   /**

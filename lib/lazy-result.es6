@@ -383,44 +383,44 @@ class LazyResult {
   }
 
   walkVisitorPlugins () {
-    console.log(`walkVisitorPlugins`)
     let root = this.result.root
-    // let listeners = this.result.root.listeners || {}
+    let listeners = this.result.root.listeners || {}
 
-    // root.walk((node, index) => {
-    //   // Хождение по AST дереву
-    //   //console.log("Хождение по AST дереву");
-    //   // console.log("listeners", listeners)
-    //   /*
-    //   let listeners =
-    //     {
-    //       decl: {
-    //         enter: [
-    //           Function,
-    //           Function
-    //         ],
-    //         exit: [
-    //           Function
-    //         ]
-    //       },
-    //       'at-rule': {
-    //         exit: [
-    //           Function
-    //         ]
-    //       },
-    //     };
-    //   */
-    //   let { type } = node;
-    //   let visitors = listeners[type];
-    //    console.log(`nodeType`, node.type)
-    //   // console.log(`node`, node)
-    //   // console.log("index", index)
-    // })
-    root.each(node => {
-      console.log(`each nodeType`, node.type)
-      // console.log(`node`, node)
-      // console.log("index", index)
+    root.isVisitorMode = true
+
+    root.walk((node, index, isPostOrder) => {
+      // Хождение по AST дереву
+      // console.log("listeners", listeners)
+      /*
+      let listeners =
+        {
+          decl: {
+            enter: [
+              Function,
+              Function
+            ],
+            exit: [
+              Function
+            ]
+          },
+          'at-rule': {
+            exit: [
+              Function
+            ]
+          },
+        };
+      */
+      let { type } = node
+      let visitorsByType = listeners[type] || {}
+      let order = !isPostOrder ? 'enter' : 'exit'
+      let visitorsByOrder = visitorsByType[order] || []
+
+      visitorsByOrder.map(visitor => {
+        visitor(node, index)
+      })
     })
+
+    root.isVisitorMode = false
   }
 }
 
