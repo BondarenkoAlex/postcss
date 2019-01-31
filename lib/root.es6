@@ -5,6 +5,9 @@ function isString (obj) {
     (!!obj && typeof obj === 'object' && obj.constructor === String)
 }
 
+let _isVisitorMode = Symbol('isVisitorMode')
+let _listeners = Symbol('listeners')
+
 /**
  * Represents a CSS file and contains all its parsed nodes.
  *
@@ -19,9 +22,25 @@ class Root extends Container {
   constructor (defaults) {
     super(defaults)
     this.type = 'root'
-    this.isVisitorMode = false // режим работы
+    this[_isVisitorMode] = false // режим работы
     if (!this.nodes) this.nodes = []
-    if (!this.listeners) this.listeners = {}
+    if (!this[_listeners]) this[_listeners] = {}
+  }
+
+  get isVisitorMode () {
+    return this[_isVisitorMode]
+  }
+
+  set isVisitorMode (value) {
+    this[_isVisitorMode] = value
+  }
+
+  get listeners () {
+    return this[_listeners]
+  }
+
+  set listeners (value) {
+    this[_listeners] = value
   }
 
   removeChild (child, ignore) {
@@ -125,11 +144,11 @@ class Root extends Container {
     let eventName = Object.keys(listeners[type]).pop()
     let cb = listeners[type][eventName]
 
-    let visitorPlugins = this.listeners || {}
+    let visitorPlugins = this[_listeners] || {}
     let eventByType = visitorPlugins[type] || {}
     let callbacksByEvent = eventByType[eventName] || []
 
-    this.listeners = {
+    this[_listeners] = {
       ...visitorPlugins,
       [type]: {
         ...eventByType,

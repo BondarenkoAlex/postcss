@@ -58,8 +58,7 @@ it('executes on finally callback', () => {
     .then(() => expect(mockCallback).toHaveBeenCalledTimes(1))
 })
 
-it('walkVisitorPlugins()', () => {
-  let result = new LazyResult(processor, 'a{color: black}', { })
-  console.log('dfdsf', result)
-  // expect(result.warnings()).toEqual([])
-})
+// it('walkVisitorPlugins()', () => {
+//   let result = new LazyResult(processor, 'a{color: black}', { })
+//   // expect(result.warnings()).toEqual([])
+// })

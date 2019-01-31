@@ -22,9 +22,7 @@
     "docs": "jsdoc -c .jsdocrc lib/*.es6",
     "lint": "eslint-ci *.js lib/*.es6 test/*.js",
     "test": "gulp && jest && yarn lint && yarn spell && size-limit",
-    "te": "jest && yarn lint && yarn spell && size-limit",
-    "jest": "gulp --gulpfile gulpfiletest.js && jest test/container.test.js",
-    "jest1": "gulp"
+    "te": "jest && yarn lint && yarn spell && size-limit"
   },
   "author": "Andrey Sitnik <andrey@sitnik.ru>",
   "license": "MIT",

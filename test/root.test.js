@@ -127,15 +127,15 @@ it('on() - вызов функций', () => {
   let root = parse('')
 
   let cb = () => {}
-  root.validateNameTypeNode = jest.fn()
-  root.normalizeVisitorPlugin = jest.fn()
-  root.updateVisitorPlugins = jest.fn()
+  let spyValidateNameTypeNode = jest.spyOn(root, 'validateNameTypeNode')
+  let spyNormalizeVisitorPlugin = jest.spyOn(root, 'normalizeVisitorPlugin')
+  let spyUpdateVisitorPlugins = jest.spyOn(root, 'updateVisitorPlugins')
 
   root.on('decl', cb)
 
-  expect(root.validateNameTypeNode).toHaveBeenCalledWith('decl')
-  expect(root.normalizeVisitorPlugin).toHaveBeenCalledWith('decl', cb)
-  expect(root.updateVisitorPlugins).toHaveBeenCalled()
+  expect(spyValidateNameTypeNode).toHaveBeenCalledWith('decl')
+  expect(spyNormalizeVisitorPlugin).toHaveBeenCalledWith('decl', cb)
+  expect(spyUpdateVisitorPlugins).toHaveBeenCalled()
 })
 
 it('on() - наполнение массива плагинов', () => {

@@ -10,6 +10,9 @@ function cleanSource (nodes) {
   })
 }
 
+let _isComplete = Symbol('isComplete')
+let _isDirty = Symbol('isDirty')
+
 /**
  * The {@link Root}, {@link AtRule}, and {@link Rule} container nodes
  * inherit some common methods to help work with their children.
@@ -23,8 +26,8 @@ function cleanSource (nodes) {
 class Container extends Node {
   constructor (defaults) {
     super(defaults)
-    this.isComplete = false // признак того, что завершен обхода узла
-    this.isDirty = true // признак того, что узел грязный и его надо обойти
+    this[_isComplete] = false // признак того, что завершен обхода узла
+    this[_isDirty] = true // признак того, что узел грязный и его надо обойти
   }
 
   push (child) {
@@ -673,7 +676,7 @@ class Container extends Node {
   markComplete () {
     if (!this.isVisitorModeRoot()) { return }
 
-    this.isComplete = true
+    this[_isComplete] = true
   }
 
   /**
@@ -684,7 +687,7 @@ class Container extends Node {
   markDirty () {
     if (!this.isVisitorModeRoot()) { return }
 
-    this.isDirty = false
+    this[_isDirty] = false
   }
 
   /**
@@ -693,7 +696,7 @@ class Container extends Node {
    * @return {boolean} Истина, если узел грязный
    */
   isDirtyNode () {
-    return this.isVisitorModeRoot() ? this.isDirty : false
+    return this.isVisitorModeRoot() ? this[_isDirty] : false
   }
 
   /**
@@ -714,10 +717,10 @@ class Container extends Node {
   resetNodeRound () {
     if (!this.isVisitorModeRoot()) { return }
 
-    this.isDirty = true
+    this[_isDirty] = true
 
-    if (this.isComplete) {
-      this.isComplete = false
+    if (this[_isComplete]) {
+      this[_isComplete] = false
 
       if (this.parent) {
         this.parent.resetNodeRound()
