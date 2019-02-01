@@ -388,7 +388,7 @@ class LazyResult {
 
     root.isVisitorMode = true
 
-    root.walk((node, index, isPostOrder) => {
+    root.walkVisitor((node, index, isPostOrder) => {
       // Хождение по AST дереву
       // console.log("listeners", listeners)
       /*

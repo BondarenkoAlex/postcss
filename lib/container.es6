@@ -81,7 +81,10 @@ class Container extends Node {
 
     let index, result
     while (this.indexes[id] < this.nodes.length) {
-      if (this.isDirtyNode()) { this.indexes[id] = 0 }
+      // if (this.isDirtyNode()) {
+      //
+      //   this.indexes[id] = 0
+      // }
 
       index = this.indexes[id]
       result = callback(this.nodes[index], index)
@@ -116,7 +119,7 @@ class Container extends Node {
    */
   walk (callback) {
     return this.each((child, i) => {
-      this.markDirty()
+      // this.markDirty()
 
       let result
       try {
@@ -132,6 +135,64 @@ class Container extends Node {
       }
       if (result !== false && child.walk) {
         result = child.walk(callback)
+      }
+
+      // if (this.isVisitorModeRoot()) {
+      //   result = callback(child, i, true)
+      // }
+      //
+      // this.markComplete()
+
+      return result
+    })
+  }
+
+  eachVisitor (callback) {
+    if (!this.lastEach) this.lastEach = 0
+    if (!this.indexes) this.indexes = { }
+
+    this.lastEach += 1
+    let id = this.lastEach
+    this.indexes[id] = 0
+
+    if (!this.nodes) return undefined
+
+    let index, result
+    while (this.indexes[id] < this.nodes.length) {
+      index = this.indexes[id]
+      result = callback(this.nodes[index], index)
+      if (result === false) break
+
+      this.indexes[id] += 1
+
+      if (this.isDirtyNode() && this.indexes[id] === this.nodes.length) {
+        this.indexes[id] = 0
+      }
+    }
+
+    delete this.indexes[id]
+
+    return result
+  }
+
+  walkVisitor (callback) {
+    return this.eachVisitor((child, i) => {
+      this.markDirty()
+
+      let result
+      try {
+        result = callback(child, i)
+      } catch (e) {
+        e.postcssNode = child
+        if (e.stack && child.source && /\n\s{4}at /.test(e.stack)) {
+          let s = child.source
+          e.stack = e.stack.replace(/\n\s{4}at /,
+            `$&${ s.input.from }:${ s.start.line }:${ s.start.column }$&`)
+        }
+        throw e
+      }
+      if (result !== false && child.walk) {
+        result = child.walkVisitor(callback)
       }
 
       if (this.isVisitorModeRoot()) {

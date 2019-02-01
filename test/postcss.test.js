@@ -1,6 +1,47 @@
 let Processor = require('../lib/processor')
 let postcss = require('../lib/postcss')
 
+let pluginPostcssWillChange = postcss.plugin('postcss-will-change', () => {
+  return function (css) {
+    css.on('decl', node => {
+      if (node.prop !== 'will-change') {
+        return
+      }
+
+      let already = node.parent.some(i => {
+        return i.type === 'rule' && i.prop === 'backface-visibility'
+      })
+
+      if (already) {
+        return
+      }
+
+      node.cloneBefore({
+        prop: 'backface-visibility',
+        value: 'hidden'
+      })
+    })
+  }
+})
+
+let pluginAddPropWillChange = postcss.plugin('add-prop-will-change', () => {
+  return function (css) {
+    css.on('decl', node => {
+      if (node.prop !== 'will-change') {
+        return
+      }
+      let root = node.root()
+
+      root.walkDecls('color', decl => {
+        decl.cloneBefore({
+          prop: 'will-change',
+          value: 'transform'
+        })
+      })
+    })
+  }
+})
+
 it('creates plugins list', () => {
   let processor = postcss()
   expect(processor instanceof Processor).toBeTruthy()
@@ -148,31 +189,8 @@ it('works with null', () => {
 })
 
 it('example visitor plugin will-change', () => {
-  let plugin = postcss.plugin('postcss-will-change', () => {
-    // options - опции в конфиге
-    return function (css) {
-      css.on('decl', node => {
-        if (node.prop !== 'will-change') {
-          return
-        }
-
-        let already = node.parent.some(i => {
-          return i.type === 'rule' && i.prop === 'backface-visibility'
-        })
-
-        if (already) {
-          return
-        }
-
-        node.cloneBefore({
-          prop: 'backface-visibility',
-          value: 'hidden'
-        })
-      })
-    }
-  })
-
-  return postcss([plugin]).process('@media screen and (min-width: 480px) ' +
+  return postcss([pluginPostcssWillChange])
+    .process('@media screen and (min-width: 480px) ' +
     '{body {background-color: lightgreen; color: red;}' +
     '.foo{will-change: transform;}}' +
     'div{color: green;}', { from: undefined })
@@ -184,37 +202,98 @@ it('example visitor plugin will-change', () => {
     })
 })
 
-it('example visitor plugin will-change 2', () => {
-  let plugin = postcss.plugin('postcss-will-change', () => {
-    return function (css) {
-      css.on('decl.exit', node => {
-        if (node.prop !== 'will-change') {
-          return
-        }
+// it('example visitor plugin will-change 2', () => {
+//   let plugin = postcss.plugin('postcss-will-change', () => {
+//     return function (css) {
+//       css.on('decl.exit', node => {
+//         if (node.prop !== 'will-change') {
+//           return
+//         }
+//
+//         let already = node.parent.some(i => {
+//           return i.type === 'rule' && i.prop === 'backface-visibility'
+//         })
+//
+//         if (already) {
+//           return
+//         }
+//
+//         node.cloneBefore({
+//           prop: 'backface-visibility',
+//           value: 'hidden'
+//         })
+//       })
+//     }
+//   })
+//
+//   return postcss([plugin]).process(
+//     '.a{ backface-visibility: visible; } ' +
+//     '.b{ will-change: transform; }', { from: undefined })
+//     .then(result => {
+//       expect(result.css).toEqual(
+//         '.a{ backface-visibility: visible; } ' +
+//         '.b{ backface-visibility: hidden; will-change: transform; }'
+//       )
+//     })
+// })
 
-        let already = node.parent.some(i => {
-          return i.type === 'rule' && i.prop === 'backface-visibility'
-        })
+// it('example visitor plugin will-change 3', () => {
+//   let plugin = postcss.plugin('postcss-will-change', () => {
+//     return function (css) {
+//       css.on('decl', node => {
+//         if (node.prop !== 'will-change') {
+//           return
+//         }
+//
+//         let already = node.parent.some(i => {
+//           return i.type === 'rule' && i.prop === 'backface-visibility'
+//         })
+//
+//         if (already) {
+//           return
+//         }
+//
+//         node.cloneBefore({
+//           prop: 'backface-visibility',
+//           value: 'hidden'
+//         })
+//       })
+//     }
+//   })
+//
+//   return postcss([plugin]).process(
+//     '.a{ backface-visibility: visible; } ' +
+//     '.b{ will-change: transform; } ' +
+//     '.c{ will-change: transform; }', { from: undefined })
+//     .then(result => {
+//       expect(result.css).toEqual(
+//         '.a{ backface-visibility: visible; } ' +
+//         '.b{ backface-visibility: hidden; will-change: transform; } ' +
+//         '.c{ backface-visibility: hidden; will-change: transform; }'
+//       )
+//     })
+// })
 
-        if (already) {
-          return
-        }
-
-        node.cloneBefore({
-          prop: 'backface-visibility',
-          value: 'hidden'
-        })
-      })
-    }
-  })
-
-  return postcss([plugin]).process(
-    'a{ backface-visibility: visible; } ' +
-    'b{ will-change: transform; }', { from: undefined })
+it('example visitor plugin add-prop', () => {
+  return postcss([pluginAddPropWillChange]).process(
+    '.a{ color: red; } ' +
+    '.b{ will-change: transform; }', { from: undefined })
     .then(result => {
       expect(result.css).toEqual(
-        'a{ backface-visibility: visible; } ' +
-        'b{ backface-visibility: hidden; will-change: transform; }'
+        '.a{ will-change: transform; color: red; } ' +
+        '.b{ will-change: transform; }'
+      )
+    })
+})
+
+it('example visitor plugin will-change 4', () => {
+  return postcss([pluginAddPropWillChange, pluginPostcssWillChange]).process(
+    '.a{ color: red; } ' +
+    '.b{ will-change: transform; }', { from: undefined })
+    .then(result => {
+      expect(result.css).toEqual(
+        '.a{ will-change: transform; color: red;   } ' +
+        '.b{ backface-visibility: hidden; will-change: transform; }'
       )
     })
 })
