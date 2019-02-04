@@ -9,7 +9,7 @@ let pluginPostcssWillChange = postcss.plugin('postcss-will-change', () => {
       }
 
       let already = node.parent.some(i => {
-        return i.type === 'rule' && i.prop === 'backface-visibility'
+        return i.type === 'decl' && i.prop === 'backface-visibility'
       })
 
       if (already) {
@@ -33,6 +33,14 @@ let pluginAddPropWillChange = postcss.plugin('add-prop-will-change', () => {
       let root = node.root()
 
       root.walkDecls('color', decl => {
+        let already = decl.parent.some(i => {
+          return i.type === 'decl' && i.prop === 'will-change'
+        })
+
+        if (already) {
+          return
+        }
+
         decl.cloneBefore({
           prop: 'will-change',
           value: 'transform'
@@ -190,15 +198,34 @@ it('works with null', () => {
 
 it('example visitor plugin will-change', () => {
   return postcss([pluginPostcssWillChange])
-    .process('@media screen and (min-width: 480px) ' +
-    '{body {background-color: lightgreen; color: red;}' +
-    '.foo{will-change: transform;}}' +
-    'div{color: green;}', { from: undefined })
+    .process(
+      '@media screen and(min-width: 480 px) {' +
+        'body {' +
+          'background-color: lightgreen;' +
+          'color: red;' +
+        '}' +
+        '.foo {' +
+          'will-change: transform; ' +
+        '}' +
+      '}' +
+      'div {' +
+        'color: green;' +
+      '}', { from: undefined })
     .then(result => {
-      expect(result.css).toEqual('@media screen and (min-width: 480px) {body' +
-        ' {background-color: lightgreen; color: red;}' +
-        '.foo{backface-visibility: hidden;' +
-        'will-change: transform;}}div{color: green;}')
+      expect(result.css).toEqual(
+        '@media screen and(min-width: 480 px) {' +
+          'body {' +
+            'background-color: lightgreen;' +
+            'color: red;' +
+          '}' +
+          '.foo {' +
+            'backface-visibility: hidden;' +
+            'will-change: transform; ' +
+          '}' +
+        '}' +
+        'div {' +
+          'color: green;' +
+        '}')
     })
 })
 
@@ -287,12 +314,18 @@ it('example visitor plugin add-prop', () => {
 })
 
 it('example visitor plugin will-change 4', () => {
-  return postcss([pluginAddPropWillChange, pluginPostcssWillChange]).process(
-    '.a{ color: red; } ' +
+  return postcss([pluginPostcssWillChange, pluginAddPropWillChange]).process(
+    '.a{ ' +
+      'color: red; ' +
+    '} ' +
     '.b{ will-change: transform; }', { from: undefined })
     .then(result => {
       expect(result.css).toEqual(
-        '.a{ will-change: transform; color: red;   } ' +
+        '.a{ ' +
+          'backface-visibility: hidden; ' +
+          'will-change: transform; ' +
+          'color: red; ' +
+        '} ' +
         '.b{ backface-visibility: hidden; will-change: transform; }'
       )
     })

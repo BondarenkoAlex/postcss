@@ -81,16 +81,15 @@ class Container extends Node {
 
     let index, result
     while (this.indexes[id] < this.nodes.length) {
-      // if (this.isDirtyNode()) {
-      //
-      //   this.indexes[id] = 0
-      // }
-
       index = this.indexes[id]
       result = callback(this.nodes[index], index)
       if (result === false) break
 
       this.indexes[id] += 1
+
+      if (result === 'reset-loop') {
+        this.indexes[id] = 0
+      }
     }
 
     delete this.indexes[id]
@@ -147,37 +146,41 @@ class Container extends Node {
     })
   }
 
-  eachVisitor (callback) {
-    if (!this.lastEach) this.lastEach = 0
-    if (!this.indexes) this.indexes = { }
-
-    this.lastEach += 1
-    let id = this.lastEach
-    this.indexes[id] = 0
-
-    if (!this.nodes) return undefined
-
-    let index, result
-    while (this.indexes[id] < this.nodes.length) {
-      index = this.indexes[id]
-      result = callback(this.nodes[index], index)
-      if (result === false) break
-
-      this.indexes[id] += 1
-
-      if (this.isDirtyNode() && this.indexes[id] === this.nodes.length) {
-        this.indexes[id] = 0
-      }
-    }
-
-    delete this.indexes[id]
-
-    return result
-  }
+  // eachVisitor (callback) {
+  //   if (!this.lastEach) this.lastEach = 0
+  //   if (!this.indexes) this.indexes = { }
+  //
+  //   this.lastEach += 1
+  //   let id = this.lastEach
+  //   this.indexes[id] = 0
+  //
+  //   if (!this.nodes) return undefined
+  //
+  //   let index, result
+  //   while (this.indexes[id] < this.nodes.length) {
+  //     index = this.indexes[id]
+  //     result = callback(this.nodes[index], index)
+  //     if (result === false) break
+  //
+  //     this.indexes[id] += 1
+  //
+  //     if (this.isDirtyNode() && this.indexes[id] === this.nodes.length) {
+  //       this.indexes[id] = 0
+  //     }
+  //   }
+  //
+  //   delete this.indexes[id]
+  //
+  //   return result
+  // }
 
   walkVisitor (callback) {
-    return this.eachVisitor((child, i) => {
-      this.markDirty()
+    return this.each((child, i) => {
+      if (child.walk && !child.isDirtyNode()) {
+        return
+      }
+
+      child.walk && child.markDirty()
 
       let result
       try {
@@ -191,15 +194,21 @@ class Container extends Node {
         }
         throw e
       }
+
       if (result !== false && child.walk) {
         result = child.walkVisitor(callback)
       }
 
-      if (this.isVisitorModeRoot()) {
+      // todo тоде обернуть в try catch
+      if (child.walk && child.isVisitorModeRoot()) {
         result = callback(child, i, true)
       }
 
-      this.markComplete()
+      if (child.walk && child.isDirtyNode()) {
+        return 'reset-loop'
+      }
+
+      child.walk && child.markComplete()
 
       return result
     })
@@ -731,7 +740,6 @@ class Container extends Node {
 
   /**
    * Маркеруем узел "обойденным"
-   * @private
    * @return {undefined}
    */
   markComplete () {
@@ -742,7 +750,6 @@ class Container extends Node {
 
   /**
    * @description Маркеруем узел грязным
-   * @private
    * @return {undefined}
    */
   markDirty () {
@@ -753,7 +760,6 @@ class Container extends Node {
 
   /**
    * Проверка узла на "грязность"
-   * @private
    * @return {boolean} Истина, если узел грязный
    */
   isDirtyNode () {

@@ -388,38 +388,45 @@ class LazyResult {
 
     root.isVisitorMode = true
 
-    root.walkVisitor((node, index, isPostOrder) => {
-      // Хождение по AST дереву
-      // console.log("listeners", listeners)
-      /*
-      let listeners =
-        {
-          decl: {
-            enter: [
+    // let cnt = 0
+    while (root.isDirtyNode()) {
+      root.markDirty()
+      // cnt++
+      root.walkVisitor((node, index, isPostOrder) => {
+        // Хождение по AST дереву
+        // console.log("listeners", listeners)
+        /*
+          let listeners =
+            {
+            decl: {
+              enter: [
               Function,
               Function
-            ],
-            exit: [
+              ],
+              exit: [
               Function
-            ]
-          },
-          'at-rule': {
-            exit: [
+              ]
+            },
+            'at-rule': {
+              exit: [
               Function
-            ]
-          },
-        };
-      */
-      let { type } = node
-      let visitorsByType = listeners[type] || {}
-      let order = !isPostOrder ? 'enter' : 'exit'
-      let visitorsByOrder = visitorsByType[order] || []
+              ]
+            },
+            };
+          */
 
-      visitorsByOrder.map(visitor => {
-        visitor(node, index)
+        let { type } = node
+        let visitorsByType = listeners[type] || {}
+        let order = !isPostOrder ? 'enter' : 'exit'
+        let visitorsByOrder = visitorsByType[order] || []
+
+        visitorsByOrder.map(visitor => {
+          visitor(node, index)
+        })
       })
-    })
+    }
 
+    root.markComplete()
     root.isVisitorMode = false
   }
 }
