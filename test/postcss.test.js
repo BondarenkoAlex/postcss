@@ -50,6 +50,14 @@ let pluginAddPropWillChange = postcss.plugin('add-prop-will-change', () => {
   }
 })
 
+let pluginReplaceColor = postcss.plugin('postcss-replace-color', () => {
+  return function (css) {
+    css.walkDecls('color', decl => {
+      decl.value = 'green'
+    })
+  }
+})
+
 it('creates plugins list', () => {
   let processor = postcss()
   expect(processor instanceof Processor).toBeTruthy()
@@ -228,7 +236,7 @@ it('example visitor plugin will-change', () => {
         '}')
     })
 })
-
+//
 // it('example visitor plugin will-change 2', () => {
 //   let plugin = postcss.plugin('postcss-will-change', () => {
 //     return function (css) {
@@ -263,7 +271,7 @@ it('example visitor plugin will-change', () => {
 //       )
 //     })
 // })
-
+//
 // it('example visitor plugin will-change 3', () => {
 //   let plugin = postcss.plugin('postcss-will-change', () => {
 //     return function (css) {
@@ -301,6 +309,18 @@ it('example visitor plugin will-change', () => {
 //     })
 // })
 
+it('example pluginReplaceColor', () => {
+  return postcss([pluginReplaceColor]).process(
+    '.a{ color: red; } ' +
+    '.b{ will-change: transform; }', { from: undefined })
+    .then(result => {
+      expect(result.css).toEqual(
+        '.a{ color: green; } ' +
+        '.b{ will-change: transform; }'
+      )
+    })
+})
+
 it('example visitor plugin add-prop', () => {
   return postcss([pluginAddPropWillChange]).process(
     '.a{ color: red; } ' +
@@ -325,6 +345,28 @@ it('example visitor plugin will-change 4', () => {
           'backface-visibility: hidden; ' +
           'will-change: transform; ' +
           'color: red; ' +
+        '} ' +
+        '.b{ backface-visibility: hidden; will-change: transform; }'
+      )
+    })
+})
+
+it('example visitor plugin 3', () => {
+  return postcss([
+    pluginReplaceColor,
+    pluginPostcssWillChange,
+    pluginAddPropWillChange]
+  ).process(
+    '.a{ ' +
+      'color: red; ' +
+    '} ' +
+    '.b{ will-change: transform; }', { from: undefined })
+    .then(result => {
+      expect(result.css).toEqual(
+        '.a{ ' +
+          'backface-visibility: hidden; ' +
+          'will-change: transform; ' +
+          'color: green; ' +
         '} ' +
         '.b{ backface-visibility: hidden; will-change: transform; }'
       )

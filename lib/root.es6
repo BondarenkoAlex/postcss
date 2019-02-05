@@ -1,12 +1,12 @@
-import Container from './container'
+import RootVisitor from './root-visitor'
 
-function isString (obj) {
-  return typeof obj === 'string' ||
-    (!!obj && typeof obj === 'object' && obj.constructor === String)
-}
+// function isString (obj) {
+//   return typeof obj === 'string' ||
+//     (!!obj && typeof obj === 'object' && obj.constructor === String)
+// }
 
-let _isVisitorMode = Symbol('isVisitorMode')
-let _listeners = Symbol('listeners')
+// let _isVisitorMode = Symbol('isVisitorMode')
+// let _listeners = Symbol('listeners')
 
 /**
  * Represents a CSS file and contains all its parsed nodes.
@@ -18,30 +18,30 @@ let _listeners = Symbol('listeners')
  * root.type         //=> 'root'
  * root.nodes.length //=> 2
  */
-class Root extends Container {
+class Root extends RootVisitor {
   constructor (defaults) {
     super(defaults)
     this.type = 'root'
-    this[_isVisitorMode] = false // режим работы
+    // this[_isVisitorMode] = false // режим работы
     if (!this.nodes) this.nodes = []
-    if (!this[_listeners]) this[_listeners] = {}
+    // if (!this[_listeners]) this[_listeners] = {}
   }
 
-  get isVisitorMode () {
-    return this[_isVisitorMode]
-  }
+  // get isVisitorMode () {
+  //   return this[_isVisitorMode]
+  // }
+  //
+  // set isVisitorMode (value) {
+  //   this[_isVisitorMode] = value
+  // }
 
-  set isVisitorMode (value) {
-    this[_isVisitorMode] = value
-  }
-
-  get listeners () {
-    return this[_listeners]
-  }
-
-  set listeners (value) {
-    this[_listeners] = value
-  }
+  // get listeners () {
+  //   return this[_listeners]
+  // }
+  //
+  // set listeners (value) {
+  //   this[_listeners] = value
+  // }
 
   removeChild (child, ignore) {
     let index = this.index(child)
@@ -94,71 +94,71 @@ class Root extends Container {
     return lazy.stringify()
   }
 
-  on (typeNode, cb) {
-    /*
-    css.on("decl", (node) => {})  or  css.on("decl.enter", (node) => {})
-    css.on("rule.exit", (node) => {})
-     */
-    this.validateNameTypeNode(typeNode)
-    let listener = this.normalizeVisitorPlugin(typeNode, cb)
-    this.updateVisitorPlugins(listener)
-  }
-
-  // todo сделать проверку на тип узла
-
-  validateNameTypeNode (typeNode) {
-    let type = typeNode
-    if (!isString(type)) {
-      throw new Error('typeNode должен быть строкой')
-    }
-    let arr = type.split('.')
-    if (arr.length === 2) {
-      if (arr[1] !== 'enter' && arr[1] !== 'exit') {
-        throw new Error(
-          'Плагин должен подписаться или на enter или на exit узла')
-      }
-    } else if (arr.length > 2) {
-      throw new Error('Плагин должен подписаться или на enter или на exit узла')
-    }
-  }
-
-  /* Приведение к общему виду имен типа узла */
-  normalizeVisitorPlugin (typeNode, cb = function () {}) {
-    // typeNode имеет вид "decl" или "decl.exit" или "decl.enter"
-    // return { decl: {enter: cb}}
-    let type = typeNode
-    if (!type.includes('.')) {
-      type = `${ type }.enter`
-    }
-
-    let arr = type.split('.')
-    return ({
-      [arr[0]]: {
-        [arr[1]]: cb
-      }
-    })
-  }
-
-  updateVisitorPlugins (listeners) {
-    let type = Object.keys(listeners).pop()
-    let eventName = Object.keys(listeners[type]).pop()
-    let cb = listeners[type][eventName]
-
-    let visitorPlugins = this[_listeners] || {}
-    let eventByType = visitorPlugins[type] || {}
-    let callbacksByEvent = eventByType[eventName] || []
-
-    this[_listeners] = {
-      ...visitorPlugins,
-      [type]: {
-        ...eventByType,
-        [eventName]: [
-          ...callbacksByEvent,
-          cb
-        ]
-      }
-    }
-  }
+  // on (typeNode, cb) {
+  //   /*
+  //   css.on("decl", (node) => {})  or  css.on("decl.enter", (node) => {})
+  //   css.on("rule.exit", (node) => {})
+  //    */
+  //   this.validateNameTypeNode(typeNode)
+  //   let listener = this.normalizeVisitorPlugin(typeNode, cb)
+  //   this.updateVisitorPlugins(listener)
+  // }
+  //
+  // // todo сделать проверку на тип узла
+  //
+  // validateNameTypeNode (typeNode) {
+  //   let type = typeNode
+  //   if (!isString(type)) {
+  //     throw new Error('typeNode должен быть строкой')
+  //   }
+  //   let arr = type.split('.')
+  //   if (arr.length === 2) {
+  //     if (arr[1] !== 'enter' && arr[1] !== 'exit') {
+  //       throw new Error(
+  //         'Плагин должен подписаться или на enter или на exit узла')
+  //     }
+  //   } else if (arr.length > 2) {
+  //  throw new Error('Плагин должен подписаться или на enter или на exit узла')
+  //   }
+  // }
+  //
+  // /* Приведение к общему виду имен типа узла */
+  // normalizeVisitorPlugin (typeNode, cb = function () {}) {
+  //   // typeNode имеет вид "decl" или "decl.exit" или "decl.enter"
+  //   // return { decl: {enter: cb}}
+  //   let type = typeNode
+  //   if (!type.includes('.')) {
+  //     type = `${ type }.enter`
+  //   }
+  //
+  //   let arr = type.split('.')
+  //   return ({
+  //     [arr[0]]: {
+  //       [arr[1]]: cb
+  //     }
+  //   })
+  // }
+  //
+  // updateVisitorPlugins (listeners) {
+  //   let type = Object.keys(listeners).pop()
+  //   let eventName = Object.keys(listeners[type]).pop()
+  //   let cb = listeners[type][eventName]
+  //
+  //   let visitorPlugins = this.listeners
+  //   let eventByType = visitorPlugins[type] || {}
+  //   let callbacksByEvent = eventByType[eventName] || []
+  //
+  //   this.listeners = {
+  //     ...visitorPlugins,
+  //     [type]: {
+  //       ...eventByType,
+  //       [eventName]: [
+  //         ...callbacksByEvent,
+  //         cb
+  //       ]
+  //     }
+  //   }
+  // }
 
   /**
    * @memberof Root#

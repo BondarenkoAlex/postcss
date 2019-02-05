@@ -384,12 +384,11 @@ class LazyResult {
 
   walkVisitorPlugins () {
     let root = this.result.root
-    let listeners = this.result.root.listeners || {}
+    let listeners = this.result.root.listeners
 
     root.isVisitorMode = true
-
     // let cnt = 0
-    while (root.isDirtyNode()) {
+    while (root.isDirty) {
       root.markDirty()
       // cnt++
       root.walkVisitor((node, index, isPostOrder) => {

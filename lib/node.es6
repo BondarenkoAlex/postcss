@@ -1,6 +1,7 @@
 import CssSyntaxError from './css-syntax-error'
 import Stringifier from './stringifier'
 import stringify from './stringify'
+import Visitor from './visitor'
 
 function cloneNode (obj, parent) {
   let cloned = new obj.constructor()
@@ -30,11 +31,12 @@ function cloneNode (obj, parent) {
  *
  * @abstract
  */
-class Node {
+class Node extends Visitor {
   /**
    * @param {object} [defaults] Value for node properties.
    */
   constructor (defaults = { }) {
+    super(defaults)
     this.raws = { }
     if (process.env.NODE_ENV !== 'production') {
       if (typeof defaults !== 'object' && typeof defaults !== 'undefined') {

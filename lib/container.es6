@@ -10,9 +10,6 @@ function cleanSource (nodes) {
   })
 }
 
-let _isComplete = Symbol('isComplete')
-let _isDirty = Symbol('isDirty')
-
 /**
  * The {@link Root}, {@link AtRule}, and {@link Rule} container nodes
  * inherit some common methods to help work with their children.
@@ -24,12 +21,6 @@ let _isDirty = Symbol('isDirty')
  * @abstract
  */
 class Container extends Node {
-  constructor (defaults) {
-    super(defaults)
-    this[_isComplete] = false // признак того, что завершен обхода узла
-    this[_isDirty] = true // признак того, что узел грязный и его надо обойти
-  }
-
   push (child) {
     child.parent = this
     this.nodes.push(child)
@@ -118,8 +109,6 @@ class Container extends Node {
    */
   walk (callback) {
     return this.each((child, i) => {
-      // this.markDirty()
-
       let result
       try {
         result = callback(child, i)
@@ -135,12 +124,6 @@ class Container extends Node {
       if (result !== false && child.walk) {
         result = child.walk(callback)
       }
-
-      // if (this.isVisitorModeRoot()) {
-      //   result = callback(child, i, true)
-      // }
-      //
-      // this.markComplete()
 
       return result
     })
@@ -176,11 +159,11 @@ class Container extends Node {
 
   walkVisitor (callback) {
     return this.each((child, i) => {
-      if (child.walk && !child.isDirtyNode()) {
+      if (!child.isDirty) {
         return
       }
 
-      child.walk && child.markDirty()
+      child.markDirty()
 
       let result
       try {
@@ -200,15 +183,13 @@ class Container extends Node {
       }
 
       // todo тоде обернуть в try catch
-      if (child.walk && child.isVisitorModeRoot()) {
-        result = callback(child, i, true)
-      }
+      result = callback(child, i, true)
 
-      if (child.walk && child.isDirtyNode()) {
+      if (child.isDirty) {
         return 'reset-loop'
       }
 
-      child.walk && child.markComplete()
+      child.markComplete()
 
       return result
     })
@@ -416,7 +397,7 @@ class Container extends Node {
       for (let node of nodes) this.nodes.push(node)
     }
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -451,7 +432,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -489,7 +470,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -516,7 +497,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -548,7 +529,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -567,7 +548,7 @@ class Container extends Node {
     for (let node of this.nodes) node.parent = undefined
     this.nodes = []
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -611,7 +592,7 @@ class Container extends Node {
       decl.value = decl.value.replace(pattern, callback)
     })
 
-    this.resetNodeRound()
+    this.resetNodeWalk()
 
     return this
   }
@@ -736,63 +717,6 @@ class Container extends Node {
     })
 
     return processed
-  }
-
-  /**
-   * Маркеруем узел "обойденным"
-   * @return {undefined}
-   */
-  markComplete () {
-    if (!this.isVisitorModeRoot()) { return }
-
-    this[_isComplete] = true
-  }
-
-  /**
-   * @description Маркеруем узел грязным
-   * @return {undefined}
-   */
-  markDirty () {
-    if (!this.isVisitorModeRoot()) { return }
-
-    this[_isDirty] = false
-  }
-
-  /**
-   * Проверка узла на "грязность"
-   * @return {boolean} Истина, если узел грязный
-   */
-  isDirtyNode () {
-    return this.isVisitorModeRoot() ? this[_isDirty] : false
-  }
-
-  /**
-   * Проверка AST дерева на режим обхода в режиме "посетитель"
-   * @private
-   * @return {boolean} Истина, если режим обхода "посетитель"
-   */
-  isVisitorModeRoot () {
-    let root = this.root()
-    return root.isVisitorMode
-  }
-
-  /**
-   * Сброс узла до значения по умолчанию (на "грязный")
-   * @private
-   * @return {undefined}
-   */
-  resetNodeRound () {
-    if (!this.isVisitorModeRoot()) { return }
-
-    this[_isDirty] = true
-
-    if (this[_isComplete]) {
-      this[_isComplete] = false
-
-      if (this.parent) {
-        this.parent.resetNodeRound()
-      }
-    }
   }
 
   /**
