@@ -10,6 +10,8 @@ function cleanSource (nodes) {
   })
 }
 
+// todo Есть еще изменение css как пропса, например decl.value = 'red'
+
 /**
  * The {@link Root}, {@link AtRule}, and {@link Rule} container nodes
  * inherit some common methods to help work with their children.
