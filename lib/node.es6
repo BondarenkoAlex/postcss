@@ -1,7 +1,6 @@
 import CssSyntaxError from './css-syntax-error'
 import Stringifier from './stringifier'
 import stringify from './stringify'
-import Visitor from './visitor'
 
 function cloneNode (obj, parent) {
   let cloned = new obj.constructor()
@@ -26,18 +25,24 @@ function cloneNode (obj, parent) {
   return cloned
 }
 
+const isComplete = Symbol('isComplete')
+const isClean = Symbol('isClean')
+const resetNodeWalk = Symbol('resetNodeWalk')
+
 /**
  * All node classes inherit the following common methods.
  *
  * @abstract
  */
-class Node extends Visitor {
+class Node {
   /**
    * @param {object} [defaults] Value for node properties.
    */
   constructor (defaults = { }) {
-    super(defaults)
     this.raws = { }
+    this[isComplete] = false // признак того, что завершен обхода узла
+    this[isClean] = false // признак того, что узел чистый и его надо обойти
+
     if (process.env.NODE_ENV !== 'production') {
       if (typeof defaults !== 'object' && typeof defaults !== 'undefined') {
         throw new Error(
@@ -421,6 +426,22 @@ class Node extends Visitor {
     return pos
   }
 
+  [resetNodeWalk] () {
+    if (this.root().isVisitorMode === false) {
+      return
+    }
+
+    this[isClean] = false
+
+    if (this[isComplete]) {
+      this[isComplete] = false
+
+      if (this.parent) {
+        this.parent[resetNodeWalk]()
+      }
+    }
+  }
+
   /**
    * @memberof Node#
    * @member {string} type String representing the node’s type.
@@ -512,6 +533,7 @@ class Node extends Visitor {
 }
 
 export default Node
+export { isComplete, isClean, resetNodeWalk }
 
 /**
  * @typedef {object} position

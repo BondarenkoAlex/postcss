@@ -1,6 +1,6 @@
 import Declaration from './declaration'
 import Comment from './comment'
-import Node from './node'
+import Node, { isComplete, isClean, resetNodeWalk } from './node'
 
 function cleanSource (nodes) {
   return nodes.map(i => {
@@ -9,6 +9,19 @@ function cleanSource (nodes) {
     return i
   })
 }
+
+function throwError (e, child) {
+  let error = e || {}
+  error.postcssNode = child
+  if (error.stack && child.source && /\n\s{4}at /.test(error.stack)) {
+    let s = child.source
+    error.stack = error.stack.replace(/\n\s{4}at /,
+      `$&${ s.input.from }:${ s.start.line }:${ s.start.column }$&`)
+  }
+  throw error
+}
+
+const walkVisitor = Symbol('walkVisitor')
 
 // todo Есть еще изменение css как пропса, например decl.value = 'red'
 
@@ -115,13 +128,7 @@ class Container extends Node {
       try {
         result = callback(child, i)
       } catch (e) {
-        e.postcssNode = child
-        if (e.stack && child.source && /\n\s{4}at /.test(e.stack)) {
-          let s = child.source
-          e.stack = e.stack.replace(/\n\s{4}at /,
-            `$&${ s.input.from }:${ s.start.line }:${ s.start.column }$&`)
-        }
-        throw e
+        throwError(e, child)
       }
       if (result !== false && child.walk) {
         result = child.walk(callback)
@@ -131,67 +138,37 @@ class Container extends Node {
     })
   }
 
-  // eachVisitor (callback) {
-  //   if (!this.lastEach) this.lastEach = 0
-  //   if (!this.indexes) this.indexes = { }
-  //
-  //   this.lastEach += 1
-  //   let id = this.lastEach
-  //   this.indexes[id] = 0
-  //
-  //   if (!this.nodes) return undefined
-  //
-  //   let index, result
-  //   while (this.indexes[id] < this.nodes.length) {
-  //     index = this.indexes[id]
-  //     result = callback(this.nodes[index], index)
-  //     if (result === false) break
-  //
-  //     this.indexes[id] += 1
-  //
-  //     if (this.isDirtyNode() && this.indexes[id] === this.nodes.length) {
-  //       this.indexes[id] = 0
-  //     }
-  //   }
-  //
-  //   delete this.indexes[id]
-  //
-  //   return result
-  // }
-
-  walkVisitor (callback) {
+  // todo сделать приватным
+  [walkVisitor] (callback) {
     return this.each((child, i) => {
-      if (!child.isDirty) {
+      if (child[isClean]) {
         return
       }
 
-      child.markDirty()
+      child[isClean] = true
 
       let result
       try {
         result = callback(child, i)
       } catch (e) {
-        e.postcssNode = child
-        if (e.stack && child.source && /\n\s{4}at /.test(e.stack)) {
-          let s = child.source
-          e.stack = e.stack.replace(/\n\s{4}at /,
-            `$&${ s.input.from }:${ s.start.line }:${ s.start.column }$&`)
-        }
-        throw e
+        throwError(e, child)
       }
 
       if (result !== false && child.walk) {
-        result = child.walkVisitor(callback)
+        result = child[walkVisitor](callback)
       }
 
-      // todo тоде обернуть в try catch
-      result = callback(child, i, true)
+      try {
+        result = callback(child, i, true)
+      } catch (e) {
+        throwError(e, child)
+      }
 
-      if (child.isDirty) {
+      if (!child[isClean]) {
         return 'reset-loop'
       }
 
-      child.markComplete()
+      child[isComplete] = true
 
       return result
     })
@@ -399,7 +376,7 @@ class Container extends Node {
       for (let node of nodes) this.nodes.push(node)
     }
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -434,7 +411,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -472,7 +449,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -499,7 +476,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -531,7 +508,7 @@ class Container extends Node {
       }
     }
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -550,7 +527,7 @@ class Container extends Node {
     for (let node of this.nodes) node.parent = undefined
     this.nodes = []
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -594,7 +571,7 @@ class Container extends Node {
       decl.value = decl.value.replace(pattern, callback)
     })
 
-    this.resetNodeWalk()
+    this[resetNodeWalk]()
 
     return this
   }
@@ -734,6 +711,7 @@ class Container extends Node {
 }
 
 export default Container
+export { isComplete, isClean, walkVisitor }
 
 /**
  * @callback childCondition

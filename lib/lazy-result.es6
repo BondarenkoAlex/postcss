@@ -3,6 +3,13 @@ import stringify from './stringify'
 import warnOnce from './warn-once'
 import Result from './result'
 import parse from './parse'
+import {
+  isVisitorMode,
+  listeners,
+  isComplete,
+  isClean,
+  walkVisitor
+} from './root'
 
 function isPromise (obj) {
   return typeof obj === 'object' && typeof obj.then === 'function'
@@ -384,38 +391,14 @@ class LazyResult {
 
   walkVisitorPlugins () {
     let root = this.result.root
-    let listeners = this.result.root.listeners
+    let plugins = root[listeners]
 
-    root.isVisitorMode = true
-    // let cnt = 0
-    while (root.isDirty) {
-      root.markDirty()
-      // cnt++
-      root.walkVisitor((node, index, isPostOrder) => {
-        // Хождение по AST дереву
-        // console.log("listeners", listeners)
-        /*
-          let listeners =
-            {
-            decl: {
-              enter: [
-              Function,
-              Function
-              ],
-              exit: [
-              Function
-              ]
-            },
-            'at-rule': {
-              exit: [
-              Function
-              ]
-            },
-            };
-          */
-
+    root[isVisitorMode] = true
+    while (!root[isClean]) {
+      root[isClean] = true
+      root[walkVisitor]((node, index, isPostOrder) => {
         let { type } = node
-        let visitorsByType = listeners[type] || {}
+        let visitorsByType = plugins[type] || {}
         let order = !isPostOrder ? 'enter' : 'exit'
         let visitorsByOrder = visitorsByType[order] || []
 
@@ -425,8 +408,8 @@ class LazyResult {
       })
     }
 
-    root.markComplete()
-    root.isVisitorMode = false
+    root[isComplete] = true
+    root[isVisitorMode] = false
   }
 }
 
