@@ -29,6 +29,19 @@ const isComplete = Symbol('isComplete')
 const isClean = Symbol('isClean')
 const resetNodeWalk = Symbol('resetNodeWalk')
 
+function defineProperty (target, publicPropName, privatePropName) {
+  Object.defineProperty(target, publicPropName, {
+    get () {
+      return target[privatePropName]
+    },
+    set (value) {
+      target[privatePropName] = value
+      target[resetNodeWalk]()
+    },
+    enumerable: true
+  })
+}
+
 /**
  * All node classes inherit the following common methods.
  *
@@ -533,7 +546,7 @@ class Node {
 }
 
 export default Node
-export { isComplete, isClean, resetNodeWalk }
+export { isComplete, isClean, resetNodeWalk, defineProperty }
 
 /**
  * @typedef {object} position

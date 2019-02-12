@@ -1,6 +1,8 @@
 import Declaration from './declaration'
 import Comment from './comment'
-import Node, { isComplete, isClean, resetNodeWalk } from './node'
+import Node, {
+  isComplete, isClean, resetNodeWalk, defineProperty
+} from './node'
 
 function cleanSource (nodes) {
   return nodes.map(i => {
@@ -711,7 +713,7 @@ class Container extends Node {
 }
 
 export default Container
-export { isComplete, isClean, walkVisitor }
+export { isComplete, isClean, walkVisitor, defineProperty }
 
 /**
  * @callback childCondition
