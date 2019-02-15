@@ -18,7 +18,6 @@ class Declaration extends Node {
   constructor (defaults) {
     super(defaults)
     this.type = 'decl'
-
     defineProperty(this, 'prop', prop)
     defineProperty(this, 'value', value)
   }

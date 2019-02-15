@@ -393,6 +393,10 @@ class LazyResult {
     let root = this.result.root
     let plugins = root[listeners]
 
+    if (!plugins) {
+      return
+    }
+
     root[isVisitorMode] = true
     while (!root[isClean]) {
       root[isClean] = true

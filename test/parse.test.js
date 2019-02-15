@@ -1,5 +1,5 @@
 let parse = require('../lib/parse')
-let Root = require('../lib/root')
+let Root = require('../lib/root').default
 
 let cases = require('postcss-parser-tests')
 let path = require('path')
@@ -13,7 +13,7 @@ it('works with file reads', () => {
 cases.each((name, css, json) => {
   it('parses ' + name, () => {
     let parsed = cases.jsonify(parse(css, { from: name }))
-    // todo listeners to "postcss-parser-tests"
+
     expect(parsed).toEqual(json)
   })
 })

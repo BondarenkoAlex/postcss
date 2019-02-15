@@ -1,5 +1,11 @@
+let rewire = require('rewire')
 let Result = require('../lib/result')
 let parse = require('../lib/parse')
+
+let rootRewire = rewire('../lib/root')
+let validateNameTypeNode = rootRewire.__get__('validateNameTypeNode')
+let normalizeVisitorPlugin = rootRewire.__get__('normalizeVisitorPlugin')
+let buildVisitorObject = rootRewire.__get__('buildVisitorObject')
 
 it('prepend() fixes spaces on insert before first', () => {
   let css = parse('a {} b {}')
@@ -62,86 +68,91 @@ it('generates result with map', () => {
 })
 
 it('validateNameTypeNode("decl") => ok', () => {
-  let root = parse('')
-  let validate = root.validateNameTypeNode('decl')
-
+  let validate = validateNameTypeNode('decl')
   expect(validate).toBeUndefined()
 })
 
 it('validateNameTypeNode("decl.exit") => ok', () => {
-  let root = parse('')
-  let validate = root.validateNameTypeNode('decl.exit')
-
+  let validate = validateNameTypeNode('decl.exit')
   expect(validate).toBeUndefined()
 })
 
 it('validateNameTypeNode(123) должен выкинуть ошибку', () => {
-  let root = parse('')
-
-  expect(() => {
-    root.validateNameTypeNode(123)
-  }).toThrowError(/должен быть строкой/)
+  expect(() => { validateNameTypeNode(123) })
+    .toThrowError(/должен быть строкой/)
 })
 
 it('validateNameTypeNode("decl.abcd") должен выкинуть ошибку', () => {
-  let root = parse('')
-
-  expect(() => {
-    root.validateNameTypeNode('decl.abcd')
-  }).toThrowError(/enter/)
+  expect(() => { validateNameTypeNode('decl.abcd') })
+    .toThrowError(/enter/)
 })
 
 it('validateNameTypeNode("decl.exit.abcd") должен выкинуть ошибку', () => {
-  let root = parse('')
-
-  expect(() => {
-    root.validateNameTypeNode('decl.exit.abcd')
-  }).toThrowError(/enter/)
+  expect(() => { validateNameTypeNode('decl.exit.abcd') })
+    .toThrowError(/enter/)
 })
 
 it('normalizeVisitorPlugin("decl") => "decl.enter"', () => {
-  let root = parse('')
-  let normalize = root.normalizeVisitorPlugin('decl')
+  let normalize = normalizeVisitorPlugin('decl')
 
   expect(normalize).toHaveProperty('decl')
   expect(normalize).toHaveProperty('decl.enter')
 })
 
 it('normalizeVisitorPlugin("decl.enter") => "decl.enter"', () => {
-  let root = parse('')
-  let normalize = root.normalizeVisitorPlugin('decl.enter')
+  let normalize = normalizeVisitorPlugin('decl.enter')
 
   expect(normalize).toHaveProperty('decl')
   expect(normalize).toHaveProperty('decl.enter')
 })
 
 it('normalizeVisitorPlugin("decl.exit") => "decl.exit"', () => {
-  let root = parse('')
-  let normalize = root.normalizeVisitorPlugin('decl.exit')
+  let normalize = normalizeVisitorPlugin('decl.exit')
 
   expect(normalize).toHaveProperty('decl')
   expect(normalize).toHaveProperty('decl.exit')
 })
 
-it('on() - вызов функций', () => {
-  let root = parse('')
-
+it('buildVisitorObject. Пустой listeners', () => {
   let cb = () => {}
-  let spyValidateNameTypeNode = jest.spyOn(root, 'validateNameTypeNode')
-  let spyNormalizeVisitorPlugin = jest.spyOn(root, 'normalizeVisitorPlugin')
-  let spyUpdateVisitorPlugins = jest.spyOn(root, 'updateVisitorPlugins')
 
-  root.on('decl', cb)
+  let plugin = {
+    decl: {
+      enter: cb
+    }
+  }
 
-  expect(spyValidateNameTypeNode).toHaveBeenCalledWith('decl')
-  expect(spyNormalizeVisitorPlugin).toHaveBeenCalledWith('decl', cb)
-  expect(spyUpdateVisitorPlugins).toHaveBeenCalled()
+  let listeners = {}
+
+  let expected = {
+    decl: {
+      enter: [cb]
+    }
+  }
+
+  let result = buildVisitorObject(plugin, listeners)
+  expect(result).toEqual(expected)
 })
 
-it('on() - наполнение массива плагинов', () => {
-  let root = parse('')
-
+it('buildVisitorObject. Не пустой listeners', () => {
   let cb = () => {}
+
+  let plugin = {
+    decl: {
+      enter: cb
+    }
+  }
+
+  let listeners = {
+    decl: {
+      enter: [cb],
+      exit: [cb]
+    },
+    role: {
+      exit: [cb]
+    }
+  }
+
   let expected = {
     decl: {
       enter: [cb, cb],
@@ -152,11 +163,6 @@ it('on() - наполнение массива плагинов', () => {
     }
   }
 
-  root.listeners = {}
-  root.on('decl', cb)
-  root.on('decl.enter', cb)
-  root.on('decl.exit', cb)
-  root.on('role.exit', cb)
-
-  expect(root.listeners).toEqual(expected)
+  let result = buildVisitorObject(plugin, listeners)
+  expect(result).toEqual(expected)
 })

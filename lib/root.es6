@@ -79,7 +79,7 @@ class Root extends Container {
   constructor (defaults) {
     super(defaults)
     this.type = 'root'
-    this[isVisitorMode] = false // режим работы
+    this[isVisitorMode] = false // mode work
     this[listeners] = {}
 
     if (!this.nodes) this.nodes = []
@@ -163,5 +163,5 @@ class Root extends Container {
    */
 }
 
-export default Root
 export { isVisitorMode, listeners, isComplete, isClean, walkVisitor }
+export default Root
