@@ -56,8 +56,8 @@ class Node {
    */
   constructor (defaults = { }) {
     this.raws = { }
-    this[isComplete] = false // признак того, что завершен обхода узла
-    this[isClean] = false // признак того, что узел чистый и его надо обойти
+    this[isComplete] = false
+    this[isClean] = false
 
     if (process.env.NODE_ENV !== 'production') {
       if (typeof defaults !== 'object' && typeof defaults !== 'undefined') {

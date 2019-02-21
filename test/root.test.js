@@ -77,17 +77,17 @@ it('validateNameTypeNode("decl.exit") => ok', () => {
   expect(validate).toBeUndefined()
 })
 
-it('validateNameTypeNode(123) должен выкинуть ошибку', () => {
+it('validateNameTypeNode(123) should throw an error', () => {
   expect(() => { validateNameTypeNode(123) })
-    .toThrowError(/должен быть строкой/)
+    .toThrowError(/must be a string/)
 })
 
-it('validateNameTypeNode("decl.abcd") должен выкинуть ошибку', () => {
+it('validateNameTypeNode("decl.abcd") should throw an error', () => {
   expect(() => { validateNameTypeNode('decl.abcd') })
     .toThrowError(/enter/)
 })
 
-it('validateNameTypeNode("decl.exit.abcd") должен выкинуть ошибку', () => {
+it('validateNameTypeNode("decl.exit.abcd") should throw an error', () => {
   expect(() => { validateNameTypeNode('decl.exit.abcd') })
     .toThrowError(/enter/)
 })
@@ -113,7 +113,7 @@ it('normalizeVisitorPlugin("decl.exit") => "decl.exit"', () => {
   expect(normalize).toHaveProperty('decl.exit')
 })
 
-it('buildVisitorObject. Пустой listeners', () => {
+it('buildVisitorObject. Empty listeners', () => {
   let cb = () => {}
 
   let plugin = {
@@ -134,7 +134,7 @@ it('buildVisitorObject. Пустой listeners', () => {
   expect(result).toEqual(expected)
 })
 
-it('buildVisitorObject. Не пустой listeners', () => {
+it('buildVisitorObject. Not empty listeners', () => {
   let cb = () => {}
 
   let plugin = {

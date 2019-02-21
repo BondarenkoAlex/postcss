@@ -5,28 +5,28 @@ function isString (obj) {
     (!!obj && typeof obj === 'object' && obj.constructor === String)
 }
 
-// todo сделать проверку на тип узла
 function validateNameTypeNode (typeNode) {
   let type = typeNode
 
   if (!isString(type)) {
-    throw new Error('typeNode должен быть строкой')
+    throw new Error('typeNode must be a string')
   }
 
   let arr = type.split('.')
   if (arr.length === 2) {
     if (arr[1] !== 'enter' && arr[1] !== 'exit') {
       throw new Error(
-        'Плагин должен подписаться или на enter или на exit узла')
+        'The plugin must subscribe to either the enter or exit node')
     }
   } else if (arr.length > 2) {
-    throw new Error('Плагин должен подписаться или на enter или на exit узла')
+    throw new Error('The plugin must subscribe ' +
+      'to either the enter or exit node')
   }
 }
 
-/* Приведение к общему виду имен типа узла */
+/* General view of node type names */
 function normalizeVisitorPlugin (typeNode, cb = () => {}) {
-  // typeNode имеет вид "decl" или "decl.exit" или "decl.enter"
+  // typeNode have view "decl" or "decl.exit" or "decl.enter"
   // return { decl: {enter: cb}}
   let type = typeNode
   if (!type.includes('.')) {

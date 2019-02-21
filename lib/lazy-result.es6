@@ -278,7 +278,6 @@ class LazyResult {
 
   asyncTick (resolve, reject) {
     if (this.plugin >= this.processor.plugins.length) {
-      // вызываем обработку плагинов visitor
       this.walkVisitorPlugins()
 
       this.processed = true
@@ -352,7 +351,6 @@ class LazyResult {
       }
     }
 
-    // вызываем обработку плагинов visitor
     this.walkVisitorPlugins()
 
     return this.result
