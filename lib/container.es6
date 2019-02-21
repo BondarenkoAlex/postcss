@@ -25,8 +25,6 @@ function throwError (e, child) {
 
 const walkVisitor = Symbol('walkVisitor')
 
-// todo Есть еще изменение css как пропса, например decl.value = 'red'
-
 /**
  * The {@link Root}, {@link AtRule}, and {@link Rule} container nodes
  * inherit some common methods to help work with their children.
@@ -140,7 +138,6 @@ class Container extends Node {
     })
   }
 
-  // todo сделать приватным
   [walkVisitor] (callback) {
     return this.each((child, i) => {
       if (child[isClean]) {
