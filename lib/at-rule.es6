@@ -25,8 +25,8 @@ class AtRule extends Container {
   constructor (defaults) {
     super(defaults)
     this.type = 'atrule'
-
     defineProperty(this, 'name', name)
+    this.source = undefined
     defineProperty(this, 'params', params)
   }
 

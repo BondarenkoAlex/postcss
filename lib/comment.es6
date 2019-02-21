@@ -14,7 +14,7 @@ class Comment extends Node {
   constructor (defaults) {
     super(defaults)
     this.type = 'comment'
-
+    this.source = undefined
     defineProperty(this, 'text', text)
   }
 

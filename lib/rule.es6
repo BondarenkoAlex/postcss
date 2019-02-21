@@ -19,7 +19,7 @@ class Rule extends Container {
     super(defaults)
     this.type = 'rule'
     if (!this.nodes) this.nodes = []
-
+    this.source = undefined
     defineProperty(this, 'selector', selector)
   }
 
